@@ -1,6 +1,9 @@
 import streamlit as st
 import numpy as np
 from PIL import Image
+import pandas as pd
+import pickle
+from sklearn.preprocessing import StandardScaler
 
 # ================================================================================
 
@@ -227,57 +230,98 @@ def tests(inputs):
     if (inputs[0]-1 in list(option_gender)):
         st.write("<font color='green'>Test 1 --- Passed</font>", unsafe_allow_html=True)
         st.text('Gender of the user is in the correct range')
-        test_results[0] = 0
+        test_results[0] = inputs[0]-1
     else:
         st.write("<font color='red'>Test 1 --- Failed</font>", unsafe_allow_html=True)
         st.text('Gender of the user is not in the correct range')
-        test_results[0] = 1
-
+        
     # test 2
     if (inputs[1]-1 in list(option_race)):
         st.write("<font color='green'>Test 2 --- Passed</font>", unsafe_allow_html=True)
         st.text('Ethnicity of the user is in the correct range')
-        test_results[1] = 0
+        test_results[1] = inputs[1]-1
     else:
         st.write("<font color='red'>Test 2 --- Failed</font>", unsafe_allow_html=True)
         st.text('Ethnicity of the user is not in the correct range')
-        test_results[1] = 1
-
+        return -1
     # test 3
     if (inputs[2]-1 in list(option_education)):
         st.write("<font color='green'>Test 3 --- Passed</font>", unsafe_allow_html=True)
         st.text('Education of Parents of the user is in the correct range')
-        test_results[2] = 0
+        test_results[2] = inputs[2]-1
     else:
         st.write("<font color='red'>Test 3 --- Failed</font>", unsafe_allow_html=True)
         st.text('Education of Parents of the user is not in the correct range')
-        test_results[2] = 1
-
+        return -1
     # test 4
     if (inputs[3]-1 in list(option_lunch)):
         st.write("<font color='green'>Test 4 --- Passed</font>", unsafe_allow_html=True)
         st.text('Question did user have a lunch is in the correct range')
-        test_results[3] = 0
+        test_results[3] = inputs[3]-1
     else:
         st.write("<font color='red'>Test 4 --- Failed</font>", unsafe_allow_html=True)
         st.text('Question did user have a lunch is not in the correct range')
-        test_results[3] = 1
-
+        return -1
     # test 5
     if (inputs[4]-1 in list(option_preparation)):
         st.write("<font color='green'>Test 5 --- Passed</font>", unsafe_allow_html=True)
         st.text('Preparation of the user is in the correct range')
-        test_results[4] = 0
+        test_results[4] = inputs[4]-1
     else:
         st.write("<font color='red'>Test 5 --- Failed</font>", unsafe_allow_html=True)
         st.text('Preparation of the user a lunch is not in the correct range')
-        test_results[4] = 0
-
+        return -1
     return test_results
+
+def math_score(results):
+    with open('scalers/scaler1.pkl', 'rb') as file:
+        scaler1 = pickle.load(file)
+
+    scaled_data = scaler1.transform(results.reshape(1, -1))
+    score = np.sum(np.multiply(coefs[0][:5], scaled_data)) + coefs[0][5]
+    return score
+
+def writing_score(results):
+    with open('scalers/scaler2.pkl', 'rb') as file:
+        scaler2 = pickle.load(file)
+
+    scaled_data = scaler2.transform(results.reshape(1, -1))
+    score = np.sum(np.multiply(coefs[1][:5], scaled_data)) + coefs[1][5]
+    return score
+
+def reading_score(results):
+    with open('scalers/scaler3.pkl', 'rb') as file:
+        scaler3 = pickle.load(file)
+
+    scaled_data = scaler3.transform(results.reshape(1, -1))
+    score = np.sum(np.multiply(coefs[2][:5], scaled_data)) + coefs[2][5]
+    return score
+
+def scores (results):
+    st.header('Score Results')
+    st.subheader('Score of the Math exam:')
+    math = round(math_score(results))
+    st.text(math)
+
+    st.subheader('Score of the Writing exam:')
+    writing = round(writing_score(results))
+    st.text(writing)
+
+    st.subheader('Score of the Reading exam:')
+    reading = round(reading_score(results))
+    st.text(reading)
+
+    st.subheader('Total score on the exam:')
+    st.text(f'{math + writing + reading} ({100*round((math + writing + reading)/300, 3)})%')
 
 if (0 not in inputs):
     results = tests(inputs)
+    if (type(results) == int):
+        st.text('Enter the valid information!')
+    else:
+        scores(results)
 else:
     st.text('You have not entered all information!')
-user_input = np.ones(6)
+
+
 
